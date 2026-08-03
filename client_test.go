@@ -246,6 +246,47 @@ func TestClient_EmptyPathParamsRejected(t *testing.T) {
 	}
 }
 
+func TestClient_WhitespacePathParts(t *testing.T) {
+	client, err := NewClient("127.0.0.1", "token123")
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+	exp := 100
+	tests := []struct {
+		name string
+		call func() error
+	}{
+		{"GetGuild", func() error { _, err := client.GetGuild(testCtx, "   "); return err }},
+		{"GetPlayer", func() error { _, err := client.GetPlayer(testCtx, "   "); return err }},
+		{"GetPals", func() error { _, err := client.GetPals(testCtx, "   "); return err }},
+		{"GetItems", func() error { _, err := client.GetItems(testCtx, "   "); return err }},
+		{"GetTechs", func() error { _, err := client.GetTechs(testCtx, "   "); return err }},
+		{"GetProgression", func() error { _, err := client.GetProgression(testCtx, "   "); return err }},
+		{"GiveItems", func() error { _, err := client.GiveItems(testCtx, "   ", "Money"); return err }},
+		{"GivePals", func() error { _, err := client.GivePals(testCtx, "   ", "Pengullet"); return err }},
+		{"GivePalTemplates", func() error { _, err := client.GivePalTemplates(testCtx, "   ", "Lamball.json"); return err }},
+		{"GivePalEggs", func() error {
+			_, err := client.GivePalEggs(testCtx, "   ", GivePalEgg{EggID: "PalEgg_Fire_01", PalID: "Foxparks"})
+			return err
+		}},
+		{"GiveProgression", func() error { _, err := client.GiveProgression(testCtx, "   ", nil, &exp, nil, nil, nil); return err }},
+		{"LearnTech", func() error { _, err := client.LearnTech(testCtx, "   ", "Technology_1"); return err }},
+		{"ForgetTech", func() error { _, err := client.ForgetTech(testCtx, "   ", "Technology_1"); return err }},
+		{"Ban", func() error { _, err := client.Ban(testCtx, "   ", "reason", false); return err }},
+		{"Unban", func() error { _, err := client.Unban(testCtx, "   ", "reason"); return err }},
+		{"BanIP", func() error { _, err := client.BanIP(testCtx, "   ", nil); return err }},
+		{"UnbanIP", func() error { _, err := client.UnbanIP(testCtx, "   ", nil); return err }},
+		{"Kick", func() error { _, err := client.Kick(testCtx, "   ", "reason"); return err }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.call(); err == nil {
+				t.Fatal("expected error for whitespace-only identifier")
+			}
+		})
+	}
+}
+
 func TestClient_BanAndBanlist(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/ban/test_player", func(w http.ResponseWriter, r *http.Request) {

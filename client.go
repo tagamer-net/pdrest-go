@@ -745,7 +745,7 @@ func (c *Client) doPost(ctx context.Context, path string, body any) (*GrantResul
 }
 
 func (c *Client) pathPart(label, value string) (string, error) {
-	if value == "" {
+	if strings.TrimSpace(value) == "" {
 		return "", fmt.Errorf("%s must not be empty", label)
 	}
 	return url.PathEscape(value), nil
