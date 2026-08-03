@@ -949,7 +949,7 @@ func TestForgottenTechs_UnmarshalJSON(t *testing.T) {
 
 func TestClient_DeleteBase_DocumentedShape(t *testing.T) {
 	handler := http.NewServeMux()
-	handler.HandleFunc("/v1/pdapi/deletebase/camp-1", func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc("/v1/pdapi/deletebase/13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			t.Fatalf("unexpected method %s", r.Method)
 		}
@@ -961,7 +961,7 @@ func TestClient_DeleteBase_DocumentedShape(t *testing.T) {
 			t.Fatalf("unexpected delete base payload: %s", body)
 		}
 		writeJSON(t, w, map[string]any{
-			"BaseCamp": map[string]any{"Id": "camp-1", "Summary": "Camp 1"},
+			"BaseCamp": map[string]any{"Id": "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5", "Summary": "Camp 1"},
 			"Deleted": map[string]any{
 				"BaseCampPals": 10, "ItemCount": 500, "PalBox": true,
 			},
@@ -974,15 +974,27 @@ func TestClient_DeleteBase_DocumentedShape(t *testing.T) {
 
 	client := newTestClient(t, srv.URL)
 
-	result, err := client.DeleteBase(testCtx, "camp-1")
+	result, err := client.DeleteBase(testCtx, "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5")
 	if err != nil {
 		t.Fatalf("DeleteBase failed: %v", err)
 	}
-	if result.BaseCamp.ID != "camp-1" || result.Deleted.ItemCount != 500 || !result.Deleted.PalBox {
+	if result.BaseCamp.ID != "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5" || result.Deleted.ItemCount != 500 || !result.Deleted.PalBox {
 		t.Fatalf("unexpected delete response: %+v", result)
 	}
 	if result.Archive != "archives/2023-01-01.json" {
 		t.Fatalf("unexpected archive: %q", result.Archive)
+	}
+}
+
+func TestClient_DeleteBase_RejectsNonGUID(t *testing.T) {
+	client, err := NewClient("127.0.0.1", "token123")
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+	for _, identifier := range []string{"camp-1", "13b9e8d7", "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5-extra"} {
+		if _, err := client.DeleteBase(testCtx, identifier); err == nil {
+			t.Fatalf("expected error for non-GUID identifier %q", identifier)
+		}
 	}
 }
 
@@ -1888,7 +1900,10 @@ func TestClient_EndpointErrorBranches(t *testing.T) {
 		}},
 		{"LearnTech", func(c *Client) error { _, err := c.LearnTech(testCtx, "player1", "Technology_1"); return err }},
 		{"ForgetTech", func(c *Client) error { _, err := c.ForgetTech(testCtx, "player1", "Technology_1"); return err }},
-		{"DeleteBase", func(c *Client) error { _, err := c.DeleteBase(testCtx, "base1"); return err }},
+		{"DeleteBase", func(c *Client) error {
+			_, err := c.DeleteBase(testCtx, "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5")
+			return err
+		}},
 		{"Ban", func(c *Client) error { _, err := c.Ban(testCtx, "player1", "reason", false); return err }},
 		{"Unban", func(c *Client) error { _, err := c.Unban(testCtx, "user1", "reason"); return err }},
 		{"BanIP", func(c *Client) error { _, err := c.BanIP(testCtx, "1.2.3.4", nil); return err }},

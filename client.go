@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -547,12 +548,11 @@ func (c *Client) ForgetTech(ctx context.Context, playerIdentifier string, techno
 
 // DeleteBase deletes the base camp identified by baseCampIdentifier.
 func (c *Client) DeleteBase(ctx context.Context, baseCampIdentifier string) (*DeleteBaseResponse, error) {
-	part, err := c.pathPart("base camp identifier", baseCampIdentifier)
-	if err != nil {
-		return nil, err
+	if !baseCampIDPattern.MatchString(baseCampIdentifier) {
+		return nil, errors.New("base camp identifier must be a GUID")
 	}
 	var result DeleteBaseResponse
-	if err := c.requestInto(ctx, http.MethodPost, fmt.Sprintf("/deletebase/%s", part), map[string]any{}, &result); err != nil {
+	if err := c.requestInto(ctx, http.MethodPost, fmt.Sprintf("/deletebase/%s", baseCampIdentifier), map[string]any{}, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
@@ -715,6 +715,9 @@ var banlistFilters = map[string]struct{}{
 	"reason":     {},
 	"q":          {},
 }
+
+// baseCampIDPattern matches the GUID format required for base camp identifiers.
+var baseCampIDPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
 // GetBanlist returns the ban list, optionally filtered.
 func (c *Client) GetBanlist(ctx context.Context, filters map[string]string) (*BanlistResponse, error) {
