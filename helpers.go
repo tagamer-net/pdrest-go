@@ -455,11 +455,31 @@ func validateProgressionRequest(request *GiveProgressionRequest) error {
 	return nil
 }
 
+// supportedRelics are the relic types supported by the progression grant endpoint.
+var supportedRelics = map[string]struct{}{
+	"CapturePower":        {},
+	"HungerReduction":     {},
+	"SwimSpeed":           {},
+	"FoodDecayReduction":  {},
+	"JumpPower":           {},
+	"GliderSpeed":         {},
+	"ClimbSpeed":          {},
+	"StatusAilmentResist": {},
+	"StaminaReduction":    {},
+	"SphereHoming":        {},
+	"ExpBonus":            {},
+	"RainbowPassiveRate":  {},
+	"MoveSpeed":           {},
+}
+
 func validateRelics(relics map[string]int) error {
 	if len(relics) == 0 {
 		return errors.New("relics must be a non-empty object")
 	}
 	for relicType, amount := range relics {
+		if _, ok := supportedRelics[relicType]; !ok {
+			return fmt.Errorf("unsupported relic type %q", relicType)
+		}
 		if amount <= 0 {
 			return fmt.Errorf("relic amount for %s must be a positive integer", relicType)
 		}

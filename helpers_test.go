@@ -75,6 +75,11 @@ func TestNormalizeProgressionRequest_RejectsInvalidRelics(t *testing.T) {
 	if _, err := normalizeProgressionRequest(request, nil, nil, nil, nil); err == nil {
 		t.Fatal("expected error for invalid relics in request")
 	}
+
+	unsupported := map[string]int{"UnknownRelic": 1}
+	if _, err := normalizeProgressionRequest(nil, nil, nil, nil, unsupported); err == nil {
+		t.Fatal("expected error for unsupported relic type")
+	}
 }
 
 func TestNormalizeProgressionRequest_FromRequest(t *testing.T) {
