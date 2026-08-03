@@ -43,6 +43,10 @@ _, err = client.Alert(context.Background(), "Server restart in 5 minutes")
 
 All request methods accept a `context.Context` for cancellation and timeouts.
 
+The base URL port is optional: `http` defaults to `17993` (PalDefender's
+default) and `https` to `443`. Hosts must be IP addresses or RFC 1123 DNS
+hostnames.
+
 ### Options
 
 | Option                  | Description                                                        |
@@ -90,8 +94,9 @@ and `ResponseBody`. When the response body follows the documented error
 envelope (`{"Error": {"Code", "Message", "Details"}}`), it is additionally
 exposed through the typed `Envelope *ErrorEnvelope` field; non-envelope
 bodies leave it nil and remain available via `ResponseBody`. Error bodies are
-capped at 1 KiB, and redirect responses (3xx) surface as `*APIError` instead
-of being followed.
+capped at 1 KiB, so bodies larger than 1 KiB are truncated and `Envelope` can
+be nil even when the body follows the envelope shape. Redirect responses (3xx)
+surface as `*APIError` instead of being followed.
 
 ## Platform support
 
