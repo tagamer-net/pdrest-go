@@ -318,9 +318,15 @@ func eggFromMap(m map[string]any) (GivePalEgg, error) {
 	if _, present := m["PalID"]; present && !hasPalID {
 		return GivePalEgg{}, errors.New("palID must be a string")
 	}
+	if hasPalID && palID == "" {
+		return GivePalEgg{}, errors.New("palID must be a non-empty string")
+	}
 	palTemplate, hasPalTemplate := m["PalTemplate"].(string)
 	if _, present := m["PalTemplate"]; present && !hasPalTemplate {
 		return GivePalEgg{}, errors.New("palTemplate must be a string")
+	}
+	if hasPalTemplate && palTemplate == "" {
+		return GivePalEgg{}, errors.New("palTemplate must be a non-empty string")
 	}
 	if hasPalID == hasPalTemplate {
 		return GivePalEgg{}, errors.New("exactly one of palID or palTemplate must be provided")

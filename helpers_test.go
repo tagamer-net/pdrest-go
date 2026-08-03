@@ -322,6 +322,8 @@ func TestNormalizePalEggInputs(t *testing.T) {
 		{"map wrong type egg id", []PalEggInput{map[string]any{"EggID": 5, "PalID": "Foxparks"}}, nil, true},
 		{"map both pal id and template", []PalEggInput{map[string]any{"EggID": "x", "PalID": "Foxparks", "PalTemplate": "Foxparks.json"}}, nil, true},
 		{"map neither pal id nor template", []PalEggInput{map[string]any{"EggID": "x"}}, nil, true},
+		{"map empty pal id", []PalEggInput{map[string]any{"EggID": "x", "PalID": ""}}, nil, true},
+		{"map empty pal template", []PalEggInput{map[string]any{"EggID": "x", "PalTemplate": ""}}, nil, true},
 		{"map non-integer level", []PalEggInput{map[string]any{"EggID": "x", "PalID": "Foxparks", "Level": "a"}}, nil, true},
 		{"tuple wrong length", []PalEggInput{[]any{"PalEgg_Fire_01"}}, nil, true},
 		{"tuple non-string egg id", []PalEggInput{[]any{5, "Foxparks"}}, nil, true},
