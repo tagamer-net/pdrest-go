@@ -368,6 +368,7 @@ func TestNormalizeTechnologyInputs(t *testing.T) {
 		{"single sequence", []TechnologyInput{[]string{"A", "B"}}, []string{"A", "B"}, false},
 		{"multiple", []TechnologyInput{"A", "B"}, []string{"A", "B"}, false},
 		{"all with others", []TechnologyInput{"All", "B"}, nil, true},
+		{"lowercase all with others", []TechnologyInput{"all", "B"}, nil, true},
 		{"empty", []TechnologyInput{}, nil, true},
 		{"empty string", []TechnologyInput{""}, nil, true},
 		{"invalid type", []TechnologyInput{42}, nil, true},

@@ -502,7 +502,7 @@ func normalizeTechnologyInputs(values []TechnologyInput) (any, error) {
 		return normalized[0], nil
 	}
 	for _, value := range normalized {
-		if value == "All" {
+		if strings.EqualFold(value, "All") {
 			return nil, errors.New("\"All\" is only valid when passed by itself")
 		}
 	}
