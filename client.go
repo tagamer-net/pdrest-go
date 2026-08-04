@@ -759,6 +759,9 @@ func (c *Client) pathPart(label, value string) (string, error) {
 	if strings.TrimSpace(value) == "" {
 		return "", fmt.Errorf("%s must not be empty", label)
 	}
+	if value == "." || value == ".." {
+		return "", fmt.Errorf("%s must not be a dot segment", label)
+	}
 	return url.PathEscape(value), nil
 }
 

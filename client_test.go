@@ -306,6 +306,33 @@ func TestClient_WhitespacePathParts(t *testing.T) {
 	}
 }
 
+func TestClient_DotPathSegmentsRejected(t *testing.T) {
+	client, err := NewClient("127.0.0.1", "token123")
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+	for _, value := range []string{".", ".."} {
+		t.Run(value, func(t *testing.T) {
+			tests := []struct {
+				name string
+				call func() error
+			}{
+				{"GetGuild", func() error { _, err := client.GetGuild(testCtx, value); return err }},
+				{"GetPlayer", func() error { _, err := client.GetPlayer(testCtx, value); return err }},
+				{"GiveItems", func() error { _, err := client.GiveItems(testCtx, value, "Money"); return err }},
+				{"BanIP", func() error { _, err := client.BanIP(testCtx, value, nil); return err }},
+			}
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					if err := tt.call(); err == nil {
+						t.Fatal("expected error for dot segment identifier")
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestClient_BanAndBanlist(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/ban/test_player", func(w http.ResponseWriter, r *http.Request) {
