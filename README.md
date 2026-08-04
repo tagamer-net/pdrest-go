@@ -94,7 +94,7 @@ and `ResponseBody`. When the response body follows the documented error
 envelope (`{"Error": {"Code", "Message", "Details"}}`), it is additionally
 exposed through the typed `Envelope *ErrorEnvelope` field; non-envelope
 bodies leave it nil and remain available via `ResponseBody`. Error bodies are
-capped at 1 KiB, so bodies larger than 1 KiB are truncated and `Envelope` can
+capped at 4 KiB, so bodies larger than 4 KiB are truncated and `Envelope` can
 be nil even when the body follows the envelope shape. Successful response
 bodies are capped at 10 MiB; larger responses fail with an error and the
 limit is not configurable. Redirect responses (3xx) surface as `*APIError`
