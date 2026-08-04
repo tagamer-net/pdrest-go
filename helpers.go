@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -88,6 +89,9 @@ func asInt(value any) (int, bool) {
 		}
 		return int(v), true
 	case json.Number:
+		if i, err := strconv.ParseInt(string(v), 10, 64); err == nil {
+			return int(i), true
+		}
 		f, err := v.Float64()
 		if err != nil {
 			return 0, false
