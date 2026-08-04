@@ -323,6 +323,7 @@ func TestNormalizePalEggInputs(t *testing.T) {
 		{"tuple template", []PalEggInput{[]any{"PalEgg_Fire_01", "Foxparks.json"}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalTemplate: "Foxparks.json"}}, false},
 		{"tuple template uppercase suffix", []PalEggInput{[]any{"PalEgg_Fire_01", "FOXPARKS.JSON"}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalTemplate: "FOXPARKS.JSON"}}, false},
 		{"tuple without level", []PalEggInput{[]any{"PalEgg_Fire_01", "Foxparks"}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalID: "Foxparks"}}, false},
+		{"tuple from string slice", []PalEggInput{[]string{"PalEgg_Fire_01", "Foxparks"}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalID: "Foxparks"}}, false},
 		{"map zero level", []PalEggInput{map[string]any{"EggID": "PalEgg_Fire_01", "PalID": "Foxparks", "Level": 0}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalID: "Foxparks"}}, false},
 		{"tuple zero level", []PalEggInput{[]any{"PalEgg_Fire_01", "Foxparks", 0}}, []GivePalEgg{{EggID: "PalEgg_Fire_01", PalID: "Foxparks"}}, false},
 		{"map negative level", []PalEggInput{map[string]any{"EggID": "PalEgg_Fire_01", "PalID": "Foxparks", "Level": -1}}, nil, true},

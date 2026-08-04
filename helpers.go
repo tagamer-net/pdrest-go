@@ -290,6 +290,12 @@ func eggFromValue(value any) (GivePalEgg, error) {
 		return eggFromMap(v)
 	case []any:
 		return eggFromTuple(v)
+	case []string:
+		values := make([]any, len(v))
+		for i, s := range v {
+			values[i] = s
+		}
+		return eggFromTuple(values)
 	default:
 		return GivePalEgg{}, errors.New("pal eggs must be GivePalEgg objects, dictionaries, or tuples")
 	}
