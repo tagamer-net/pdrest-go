@@ -199,6 +199,9 @@ func TestNormalizeItemInputs(t *testing.T) {
 		{"tuple wrong length", []ItemInput{[]any{"Money"}, []any{"Wood", 2}}, nil, true},
 		{"tuple non-string item id", []ItemInput{[]any{5, 5}, []any{"Wood", 2}}, nil, true},
 		{"tuple non-integer count", []ItemInput{[]any{"Money", "x"}, []any{"Wood", 2}}, nil, true},
+		{"tuple string numeric count", []ItemInput{[]any{"Money", "500"}}, nil, true},
+		{"tuple string empty count", []ItemInput{[]any{"Money", ""}}, nil, true},
+		{"tuple string non-numeric count flattened", []ItemInput{[]any{"Money", "10x"}}, map[string]int{"Money": 1, "10x": 1}, false},
 		{"tuple non-positive count", []ItemInput{[]any{"Money", 0}}, nil, true},
 		{"nil input", []ItemInput{nil}, nil, true},
 		{"invalid type", []ItemInput{42}, nil, true},
@@ -278,6 +281,7 @@ func TestNormalizePalInputs(t *testing.T) {
 		{"tuple wrong length", []PalInput{[]any{"Pengullet"}, []any{"Foxparks", 5}}, nil, true},
 		{"tuple non-string pal id", []PalInput{[]any{5, 10}, []any{"Foxparks", 5}}, nil, true},
 		{"tuple non-integer level", []PalInput{[]any{"Pengullet", "x"}, []any{"Foxparks", 5}}, nil, true},
+		{"tuple string numeric level", []PalInput{[]any{"Pengullet", "10"}}, nil, true},
 		{"tuple non-positive level", []PalInput{[]any{"Pengullet", 0}}, nil, true},
 		{"invalid type", []PalInput{42}, nil, true},
 	}

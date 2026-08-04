@@ -577,7 +577,25 @@ func looksLikeTuple(value any) bool {
 	}
 	_, ok1 := arr[0].(string)
 	_, ok2 := asInt(arr[1])
+	if !ok2 {
+		if s, isStr := arr[1].(string); isStr {
+			ok2 = isDigitString(s)
+		}
+	}
 	return ok1 && ok2
+}
+
+// isDigitString reports whether s consists solely of decimal digits.
+func isDigitString(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func tupleToAnySlice(value any) ([]any, bool) {
