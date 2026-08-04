@@ -56,6 +56,22 @@ func TestNewClient_RequiresBearerToken(t *testing.T) {
 	}
 }
 
+func TestNewClient_TrimsBearerToken(t *testing.T) {
+	client, err := NewClient("127.0.0.1", "  token123  ")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if client.bearerToken != "token123" {
+		t.Fatalf("expected trimmed token, got %q", client.bearerToken)
+	}
+}
+
+func TestNewClient_RejectsWhitespaceOnlyBearerToken(t *testing.T) {
+	if _, err := NewClient("127.0.0.1", "   "); err == nil {
+		t.Fatal("expected error when bearer token is whitespace-only")
+	}
+}
+
 func TestNewClient_TimeoutAppliedRegardlessOfOptionOrder(t *testing.T) {
 	for _, opts := range [][]Option{
 		{WithTimeout(5 * time.Second), WithHTTPClient(&http.Client{})},

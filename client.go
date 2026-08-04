@@ -139,6 +139,7 @@ func NewClient(baseURL, bearerToken string, opts ...Option) (*Client, error) {
 	if baseURL == "" {
 		return nil, errors.New("base URL is required")
 	}
+	bearerToken = strings.TrimSpace(bearerToken)
 	if bearerToken == "" {
 		return nil, errors.New("bearer token is required")
 	}
