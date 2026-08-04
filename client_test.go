@@ -28,8 +28,14 @@ func writeJSON(t *testing.T, w http.ResponseWriter, value any) {
 	t.Helper()
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(value); err != nil {
-		t.Fatalf("failed to encode response: %v", err)
+		t.Errorf("failed to encode response: %v", err)
 	}
+}
+
+func rejectRequest(t *testing.T, w http.ResponseWriter, format string, args ...any) {
+	t.Helper()
+	t.Errorf(format, args...)
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func TestNewClient_NormalizesBaseURL(t *testing.T) {
@@ -336,11 +342,11 @@ func TestClient_DotPathSegmentsRejected(t *testing.T) {
 func TestClient_BanAndBanlist(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/ban/test_player", func(w http.ResponseWriter, r *http.Request) {
-		assertBanRequest(t, r)
+		assertBanRequest(t, w, r)
 		writeJSON(t, w, BanResponse{Success: true, UserId: "test_player", IP: true, BannedIP: "1.2.3.4", Kicked: 1})
 	})
 	handler.HandleFunc("/v1/pdapi/banlist", func(w http.ResponseWriter, r *http.Request) {
-		assertBanlistRequest(t, r)
+		assertBanlistRequest(t, w, r)
 		writeJSON(t, w, BanlistResponse{Banlist: BanlistData{
 			Version:       1,
 			BannedMessage: "Banned",
@@ -386,30 +392,36 @@ func TestClient_BanAndBanlist(t *testing.T) {
 	}
 }
 
-func assertBanRequest(t *testing.T, r *http.Request) {
+func assertBanRequest(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	if r.Method != http.MethodPost {
-		t.Fatalf("unexpected method %s", r.Method)
+		rejectRequest(t, w, "unexpected method %s", r.Method)
+		return
 	}
 	if r.Header.Get("Authorization") != "Bearer token123" {
-		t.Fatal("missing bearer token header")
+		rejectRequest(t, w, "missing bearer token header")
+		return
 	}
 	var payload BanRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		t.Fatalf("failed to decode request: %v", err)
+		rejectRequest(t, w, "failed to decode request: %v", err)
+		return
 	}
 	if payload.Reason != "test reason" || !payload.IP {
-		t.Fatal("unexpected ban payload")
+		rejectRequest(t, w, "unexpected ban payload")
+		return
 	}
 }
 
-func assertBanlistRequest(t *testing.T, r *http.Request) {
+func assertBanlistRequest(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	if r.Method != http.MethodGet {
-		t.Fatalf("unexpected method %s", r.Method)
+		rejectRequest(t, w, "unexpected method %s", r.Method)
+		return
 	}
 	if r.URL.Query().Get("active") != "true" {
-		t.Fatal("missing or incorrect active query")
+		rejectRequest(t, w, "missing or incorrect active query")
+		return
 	}
 }
 
@@ -442,14 +454,17 @@ func TestClient_SendPlayerMessage(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/SendPlayerMessage", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload SendPlayerMessageRequest
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload.SendType != "PlayerChat" || payload.Message != "hello" {
-			t.Fatalf("unexpected send message payload: %+v", payload)
+			rejectRequest(t, w, "unexpected send message payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, SendPlayerMessageResponse{Success: true, SentCount: 1})
 	})
@@ -480,7 +495,8 @@ func TestClient_GetVersion_DocumentedShape(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/version", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		writeJSON(t, w, map[string]any{
 			"Version": map[string]any{
@@ -926,7 +942,8 @@ func TestClient_LearnTech_DocumentedShape(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/learntech/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		writeJSON(t, w, map[string]any{
 			"UnlockedCount": 1,
@@ -1023,14 +1040,17 @@ func TestClient_DeleteBase_DocumentedShape(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/deletebase/13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			t.Fatalf("failed to read request: %v", err)
+			rejectRequest(t, w, "failed to read request: %v", err)
+			return
 		}
 		if string(body) != "{}" {
-			t.Fatalf("unexpected delete base payload: %s", body)
+			rejectRequest(t, w, "unexpected delete base payload: %s", body)
+			return
 		}
 		writeJSON(t, w, map[string]any{
 			"BaseCamp": map[string]any{"Id": "13b9e8d7-4f2c-42a1-b79e-fc2a9186e4d5", "Summary": "Camp 1"},
@@ -1074,14 +1094,17 @@ func TestClient_GiveProgression_DocumentedShape(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/progression/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload["EXP"] != float64(25000) {
-			t.Fatalf("unexpected progression payload: %+v", payload)
+			rejectRequest(t, w, "unexpected progression payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{
 			"Granted": map[string]any{"EXP": 25000},
@@ -1108,17 +1131,21 @@ func TestClient_GiveProgression_RequestStruct(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/progression/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload["EXP"] != float64(100) {
-			t.Fatalf("unexpected progression payload: %+v", payload)
+			rejectRequest(t, w, "unexpected progression payload: %+v", payload)
+			return
 		}
 		if _, ok := payload["Relics"]; ok {
-			t.Fatalf("unexpected relics in payload: %+v", payload)
+			rejectRequest(t, w, "unexpected relics in payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{"EXP": 100}})
 	})
@@ -1142,11 +1169,13 @@ func TestClient_GiveProgression_Relics(t *testing.T) {
 	handler.HandleFunc("/v1/pdapi/give/progression/player123", func(w http.ResponseWriter, r *http.Request) {
 		var payload map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		relics, ok := payload["Relics"].(map[string]any)
 		if !ok || relics["CapturePower"] != float64(5) {
-			t.Fatalf("unexpected relics payload: %+v", payload)
+			rejectRequest(t, w, "unexpected relics payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{
 			"Granted": map[string]any{"Relics": map[string]any{"CapturePower": 5}},
@@ -1171,16 +1200,19 @@ func TestClient_GiveItems(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/items/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload struct {
 			Items []GiveItem `json:"Items"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if len(payload.Items) != 1 || payload.Items[0].ItemID != "Money" || payload.Items[0].Count != 500 {
-			t.Fatalf("unexpected items payload: %+v", payload)
+			rejectRequest(t, w, "unexpected items payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{"Items": 500}})
 	})
@@ -1203,16 +1235,19 @@ func TestClient_GivePals(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/pals/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload struct {
 			Pals []GivePal `json:"Pals"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if len(payload.Pals) != 1 || payload.Pals[0].PalID != "Pengullet" || payload.Pals[0].Level != 10 {
-			t.Fatalf("unexpected pals payload: %+v", payload)
+			rejectRequest(t, w, "unexpected pals payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{"Pals": 1}})
 	})
@@ -1235,16 +1270,19 @@ func TestClient_GivePalTemplates(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/paltemplate/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload struct {
 			PalTemplates []string `json:"PalTemplates"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if len(payload.PalTemplates) != 1 || payload.PalTemplates[0] != "Lamball.json" {
-			t.Fatalf("unexpected templates payload: %+v", payload)
+			rejectRequest(t, w, "unexpected templates payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{"PalTemplates": 1}})
 	})
@@ -1267,16 +1305,19 @@ func TestClient_GivePalEggs(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/paleggs/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload struct {
 			PalEggs []GivePalEgg `json:"PalEggs"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if len(payload.PalEggs) != 1 || payload.PalEggs[0].EggID != "PalEgg_Fire_01" || payload.PalEggs[0].PalID != "Foxparks" || payload.PalEggs[0].Level != 12 {
-			t.Fatalf("unexpected pal eggs payload: %+v", payload)
+			rejectRequest(t, w, "unexpected pal eggs payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{"PalEggs": 1}})
 	})
@@ -1337,20 +1378,23 @@ func TestClient_GiveRecipeMaterials_HTTP(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/give/items/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload struct {
 			Items []GiveItem `json:"Items"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		counts := map[string]int{}
 		for _, item := range payload.Items {
 			counts[item.ItemID] = item.Count
 		}
 		if counts["Stone"] != 6 || counts["PaldiumFragment"] != 10 {
-			t.Fatalf("unexpected recipe materials payload: %+v", payload)
+			rejectRequest(t, w, "unexpected recipe materials payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{}})
 	})
@@ -1380,15 +1424,18 @@ func TestClient_GiveRecipeMaterials_DeterministicOrder(t *testing.T) {
 			Items []GiveItem `json:"Items"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		want := []string{"PaldiumFragment", "Stone"}
 		if len(payload.Items) != len(want) {
-			t.Fatalf("unexpected materials: %+v", payload.Items)
+			rejectRequest(t, w, "unexpected materials: %+v", payload.Items)
+			return
 		}
 		for i, item := range payload.Items {
 			if item.ItemID != want[i] {
-				t.Fatalf("unexpected material order: %+v", payload.Items)
+				rejectRequest(t, w, "unexpected material order: %+v", payload.Items)
+				return
 			}
 		}
 		writeJSON(t, w, map[string]any{"Granted": map[string]any{}})
@@ -1412,11 +1459,11 @@ func TestClient_GiveRecipeMaterials_DeterministicOrder(t *testing.T) {
 func TestClient_BanIPAndUnbanIP(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/banip/1.2.3.4", func(w http.ResponseWriter, r *http.Request) {
-		assertBanIPRequest(t, r)
+		assertBanIPRequest(t, w, r)
 		writeJSON(t, w, BanIPResponse{Success: true, IP: "1.2.3.4", UserId: "user123", Kicked: 1})
 	})
 	handler.HandleFunc("/v1/pdapi/unbanip/1.2.3.4", func(w http.ResponseWriter, r *http.Request) {
-		assertUnbanIPRequest(t, r)
+		assertUnbanIPRequest(t, w, r)
 		writeJSON(t, w, UnbanIPResponse{Success: true, IP: "1.2.3.4"})
 	})
 
@@ -1442,28 +1489,31 @@ func TestClient_BanIPAndUnbanIP(t *testing.T) {
 	}
 }
 
-func assertBanIPRequest(t *testing.T, r *http.Request) {
+func assertBanIPRequest(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	if r.Method != http.MethodPost {
-		t.Fatalf("unexpected method %s", r.Method)
+		rejectRequest(t, w, "unexpected method %s", r.Method)
+		return
 	}
 	var payload BanIPRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		t.Fatalf("failed to decode request: %v", err)
+		rejectRequest(t, w, "failed to decode request: %v", err)
+		return
 	}
 	if payload.Reason != "test reason" || payload.UserId != "user123" {
-		t.Fatalf("unexpected banip payload: %+v", payload)
+		rejectRequest(t, w, "unexpected banip payload: %+v", payload)
+		return
 	}
 }
 
 func TestClient_BanIPAndUnbanIP_NilRequestSendsEmptyObject(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/banip/1.2.3.4", func(w http.ResponseWriter, r *http.Request) {
-		assertEmptyJSONBody(t, r)
+		assertEmptyJSONBody(t, w, r)
 		writeJSON(t, w, BanIPResponse{Success: true, IP: "1.2.3.4"})
 	})
 	handler.HandleFunc("/v1/pdapi/unbanip/1.2.3.4", func(w http.ResponseWriter, r *http.Request) {
-		assertEmptyJSONBody(t, r)
+		assertEmptyJSONBody(t, w, r)
 		writeJSON(t, w, UnbanIPResponse{Success: true, IP: "1.2.3.4"})
 	})
 
@@ -1480,31 +1530,37 @@ func TestClient_BanIPAndUnbanIP_NilRequestSendsEmptyObject(t *testing.T) {
 	}
 }
 
-func assertEmptyJSONBody(t *testing.T, r *http.Request) {
+func assertEmptyJSONBody(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	if r.Method != http.MethodPost {
-		t.Fatalf("unexpected method %s", r.Method)
+		rejectRequest(t, w, "unexpected method %s", r.Method)
+		return
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		t.Fatalf("failed to read request: %v", err)
+		rejectRequest(t, w, "failed to read request: %v", err)
+		return
 	}
 	if string(body) != "{}" {
-		t.Fatalf("unexpected empty payload: %s", body)
+		rejectRequest(t, w, "unexpected empty payload: %s", body)
+		return
 	}
 }
 
-func assertUnbanIPRequest(t *testing.T, r *http.Request) {
+func assertUnbanIPRequest(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	if r.Method != http.MethodPost {
-		t.Fatalf("unexpected method %s", r.Method)
+		rejectRequest(t, w, "unexpected method %s", r.Method)
+		return
 	}
 	var payload UnbanIPRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		t.Fatalf("failed to decode request: %v", err)
+		rejectRequest(t, w, "failed to decode request: %v", err)
+		return
 	}
 	if payload.Reason != "test reason" {
-		t.Fatalf("unexpected unbanip payload: %+v", payload)
+		rejectRequest(t, w, "unexpected unbanip payload: %+v", payload)
+		return
 	}
 }
 
@@ -1512,14 +1568,17 @@ func TestClient_Unban(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/unban/user123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload UnbanRequest
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload.Reason != "test reason" {
-			t.Fatalf("unexpected unban payload: %+v", payload)
+			rejectRequest(t, w, "unexpected unban payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, UnbanResponse{Success: true, UserId: "user123"})
 	})
@@ -1542,14 +1601,17 @@ func TestClient_Kick(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/kick/player123", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload KickRequest
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload.Reason != "test reason" {
-			t.Fatalf("unexpected kick payload: %+v", payload)
+			rejectRequest(t, w, "unexpected kick payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, KickResponse{Success: true, UserId: "player123"})
 	})
@@ -1572,14 +1634,17 @@ func TestClient_Broadcast(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/Broadcast", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload BroadcastRequest
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload.Message != "hello" {
-			t.Fatalf("unexpected broadcast payload: %+v", payload)
+			rejectRequest(t, w, "unexpected broadcast payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, BroadcastResponse{Success: true})
 	})
@@ -1602,14 +1667,17 @@ func TestClient_Alert(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/Alert", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		var payload AlertRequest
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Fatalf("failed to decode request: %v", err)
+			rejectRequest(t, w, "failed to decode request: %v", err)
+			return
 		}
 		if payload.Message != "Server restart in 5 minutes" {
-			t.Fatalf("unexpected alert payload: %+v", payload)
+			rejectRequest(t, w, "unexpected alert payload: %+v", payload)
+			return
 		}
 		writeJSON(t, w, AlertResponse{Success: true})
 	})
@@ -1632,14 +1700,17 @@ func TestClient_ReloadConfig(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/ReloadConfig", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("unexpected method %s", r.Method)
+			rejectRequest(t, w, "unexpected method %s", r.Method)
+			return
 		}
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			t.Fatalf("failed to read request: %v", err)
+			rejectRequest(t, w, "failed to read request: %v", err)
+			return
 		}
 		if string(body) != "{}" {
-			t.Fatalf("unexpected reload config payload: %s", body)
+			rejectRequest(t, w, "unexpected reload config payload: %s", body)
+			return
 		}
 		writeJSON(t, w, ReloadConfigResponse{Success: true})
 	})
@@ -1796,7 +1867,8 @@ func TestClient_WithDisplayAddressSendsHeader(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/version", func(w http.ResponseWriter, r *http.Request) {
 		if got := r.Header.Get("DisplayAddress"); got != "admin-panel-1" {
-			t.Fatalf("unexpected display address header: %q", got)
+			rejectRequest(t, w, "unexpected display address header: %q", got)
+			return
 		}
 		writeJSON(t, w, VersionResponse{Version: VersionInfo{Major: 1}})
 	})
