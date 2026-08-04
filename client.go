@@ -234,10 +234,11 @@ func (c *Client) request(ctx context.Context, method, path string, body any) ([]
 		bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, drainLimitBytes))
 		_ = resp.Body.Close()
+		apiErr := errorFromResponse(method, path, bodyBytes, resp.StatusCode)
 		if readErr != nil {
-			return nil, fmt.Errorf("failed to read error response body: %w", readErr)
+			return nil, fmt.Errorf("%w: failed to read error response body: %w", apiErr, readErr)
 		}
-		return nil, errorFromResponse(method, path, bodyBytes, resp.StatusCode)
+		return nil, apiErr
 	}
 	defer func() {
 		_ = resp.Body.Close()

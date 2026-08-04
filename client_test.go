@@ -1826,6 +1826,14 @@ func TestClient_Request_TransportErrors(t *testing.T) {
 	}
 	if _, err := errorReadErrClient.GetVersion(testCtx); err == nil {
 		t.Fatal("expected error when the error response body read fails")
+	} else {
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Fatalf("expected *APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusInternalServerError {
+			t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, apiErr.StatusCode)
+		}
 	}
 }
 
