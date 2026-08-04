@@ -165,6 +165,9 @@ func TestClient_SendPlayerMessage_Validation(t *testing.T) {
 	if _, err := client.SendPlayerMessage(testCtx, &SendPlayerMessageRequest{SendType: "PlayerChat", Message: "hi", UserIDs: []string{"a", " "}}); err == nil {
 		t.Fatal("expected error when UserIDs contains an empty entry")
 	}
+	if _, err := client.SendPlayerMessage(testCtx, &SendPlayerMessageRequest{SendType: "PlayerChat", Message: "hi", UserIDs: []string{"a", "a"}}); err == nil {
+		t.Fatal("expected error when UserIDs contains duplicate entries")
+	}
 }
 
 func TestClient_BroadcastAndAlert_RequireMessage(t *testing.T) {

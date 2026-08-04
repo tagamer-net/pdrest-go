@@ -704,6 +704,13 @@ func (c *Client) SendPlayerMessage(ctx context.Context, request *SendPlayerMessa
 			return nil, errors.New("userIDs must not contain empty entries")
 		}
 	}
+	seen := make(map[string]bool, len(request.UserIDs))
+	for _, id := range request.UserIDs {
+		if seen[id] {
+			return nil, errors.New("userIDs must not contain duplicate entries")
+		}
+		seen[id] = true
+	}
 	if err := c.requestInto(ctx, http.MethodPost, "/SendPlayerMessage", request, &result); err != nil {
 		return nil, err
 	}
