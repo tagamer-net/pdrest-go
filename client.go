@@ -413,6 +413,8 @@ func (c *Client) GetProgression(ctx context.Context, playerIdentifier string) (*
 }
 
 // GiveItems grants items to the player identified by playerIdentifier.
+// Duplicate item IDs across the inputs are combined into a single grant of
+// the summed count, keeping the first-seen order.
 func (c *Client) GiveItems(ctx context.Context, playerIdentifier string, items ...ItemInput) (*GrantResult, error) {
 	normalized, err := normalizeItemInputs(items)
 	if err != nil {

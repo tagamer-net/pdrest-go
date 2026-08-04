@@ -87,6 +87,11 @@ example `[]any{"PalEgg_Fire_01", "Foxparks", 12}`) is interpreted as one
 `(egg_id, pal_id_or_template, level)` tuple; pass `GivePalEgg` objects or maps
 to grant multiple eggs.
 
+When granting items, repeated item IDs across the inputs are combined into a
+single grant entry of the summed count (keeping the first-seen order), so
+`GiveItems(ctx, id, "Money", []any{"Money", 2})` sends one `Money` grant of
+`3`.
+
 ## Errors
 
 HTTP errors are returned as `*APIError` with `StatusCode`, `Method`, `Path`

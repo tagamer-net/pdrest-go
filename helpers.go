@@ -13,6 +13,7 @@ type (
 	// RecipeResolver resolves the materials of a recipe by product ID.
 	RecipeResolver func(product string) (map[string]int, error)
 	// ItemInput accepts strings, GiveItem objects, dictionaries, or (item_id, count) tuples.
+	// Duplicate item IDs across inputs are combined into a single grant of the summed count, keeping the first-seen order.
 	ItemInput any
 	// PalInput accepts strings, GivePal objects, dictionaries, or (pal_id, level) tuples.
 	PalInput any
