@@ -216,6 +216,7 @@ func (g *GuildStorage) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	*g = GuildStorage{}
 	for key, value := range raw {
 		if err := g.unmarshalKey(key, value); err != nil {
 			return err

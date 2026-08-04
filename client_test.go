@@ -2010,3 +2010,22 @@ func TestGuildStorage_UnmarshalJSON_Errors(t *testing.T) {
 		t.Fatal("expected error for wrong-typed slot fields")
 	}
 }
+
+func TestGuildStorage_UnmarshalJSON_ResetsState(t *testing.T) {
+	var storage GuildStorage
+	if err := json.Unmarshal([]byte(`{"container_id": "cont-1", "0": {"item_id": "Money", "count": 5}}`), &storage); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(storage.Slots) != 1 || storage.ContainerID != "cont-1" {
+		t.Fatalf("unexpected first decode: %+v", storage)
+	}
+	if err := json.Unmarshal([]byte(`{"container_id": "cont-2", "current": 3, "max": 10}`), &storage); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if storage.ContainerID != "cont-2" || storage.Current != 3 || storage.Max != 10 {
+		t.Fatalf("unexpected fields after re-decode: %+v", storage)
+	}
+	if len(storage.Slots) != 0 {
+		t.Fatalf("expected empty slots after re-decode, got: %+v", storage.Slots)
+	}
+}
