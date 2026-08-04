@@ -158,6 +158,10 @@ func NewClient(baseURL, bearerToken string, opts ...Option) (*Client, error) {
 		opt(client)
 	}
 
+	if client.timeoutSet && client.timeout <= 0 {
+		return nil, errors.New("timeout must be a positive duration")
+	}
+
 	if client.httpClient == nil {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 		transport.Proxy = nil

@@ -87,6 +87,25 @@ func TestNewClient_ExplicitDefaultTimeoutAppliedToInjectedClient(t *testing.T) {
 	}
 }
 
+func TestNewClient_RejectsNonPositiveTimeout(t *testing.T) {
+	for _, timeout := range []time.Duration{0, -1 * time.Second} {
+		if _, err := NewClient("127.0.0.1", "token123", WithTimeout(timeout)); err == nil {
+			t.Fatalf("expected error for timeout %v", timeout)
+		}
+	}
+}
+
+func TestNewClient_KeepsInjectedZeroTimeoutWithoutWithTimeout(t *testing.T) {
+	injected := &http.Client{}
+	client, err := NewClient("127.0.0.1", "token123", WithHTTPClient(injected))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if client.httpClient != injected || client.httpClient.Timeout != 0 {
+		t.Fatalf("unexpected http client: %+v", client.httpClient)
+	}
+}
+
 func TestAPIError_Error(t *testing.T) {
 	err := &APIError{
 		StatusCode:   401,
