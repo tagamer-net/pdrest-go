@@ -33,7 +33,7 @@ const (
 	// maxResponseBody caps the size of success response bodies read by the client.
 	maxResponseBody = 10 << 20
 	// maxErrorBodyBytes caps the size of error response bodies read by the client.
-	maxErrorBodyBytes = 4 << 10
+	maxErrorBodyBytes = 64 << 10
 	// drainLimitBytes bounds how much of an oversized body is drained before
 	// the connection is released so it can be reused.
 	drainLimitBytes = 64 << 10
