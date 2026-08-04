@@ -379,6 +379,9 @@ func TestNormalizeTechnologyInputs(t *testing.T) {
 	}{
 		{"single", []TechnologyInput{"Technology_ElecBaton"}, "Technology_ElecBaton", false},
 		{"single all", []TechnologyInput{"All"}, "All", false},
+		{"single lowercase all", []TechnologyInput{"all"}, "All", false},
+		{"single uppercase all", []TechnologyInput{"ALL"}, "All", false},
+		{"single mixed-case all", []TechnologyInput{"aLl"}, "All", false},
 		{"single sequence", []TechnologyInput{[]string{"A", "B"}}, []string{"A", "B"}, false},
 		{"multiple", []TechnologyInput{"A", "B"}, []string{"A", "B"}, false},
 		{"all with others", []TechnologyInput{"All", "B"}, nil, true},

@@ -530,6 +530,9 @@ func normalizeTechnologyInputs(values []TechnologyInput) (any, error) {
 		return nil, errors.New("at least one technology must be provided")
 	}
 	if len(normalized) == 1 {
+		if strings.EqualFold(normalized[0], "All") {
+			return "All", nil
+		}
 		return normalized[0], nil
 	}
 	for _, value := range normalized {
