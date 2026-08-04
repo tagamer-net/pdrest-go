@@ -571,6 +571,9 @@ func isSlice(value any) bool {
 }
 
 func looksLikeTuple(value any) bool {
+	if _, ok := value.([]string); ok {
+		return false
+	}
 	arr, ok := tupleToAnySlice(value)
 	if !ok || len(arr) != 2 {
 		return false
@@ -578,24 +581,9 @@ func looksLikeTuple(value any) bool {
 	_, ok1 := arr[0].(string)
 	_, ok2 := asInt(arr[1])
 	if !ok2 {
-		if s, isStr := arr[1].(string); isStr {
-			ok2 = isDigitString(s)
-		}
+		_, ok2 = arr[1].(string)
 	}
 	return ok1 && ok2
-}
-
-// isDigitString reports whether s consists solely of decimal digits.
-func isDigitString(s string) bool {
-	if s == "" {
-		return false
-	}
-	for i := 0; i < len(s); i++ {
-		if s[i] < '0' || s[i] > '9' {
-			return false
-		}
-	}
-	return true
 }
 
 func tupleToAnySlice(value any) ([]any, bool) {

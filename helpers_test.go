@@ -201,7 +201,8 @@ func TestNormalizeItemInputs(t *testing.T) {
 		{"tuple non-integer count", []ItemInput{[]any{"Money", "x"}, []any{"Wood", 2}}, nil, true},
 		{"tuple string numeric count", []ItemInput{[]any{"Money", "500"}}, nil, true},
 		{"tuple string empty count", []ItemInput{[]any{"Money", ""}}, nil, true},
-		{"tuple string non-numeric count flattened", []ItemInput{[]any{"Money", "10x"}}, map[string]int{"Money": 1, "10x": 1}, false},
+		{"tuple string non-numeric count", []ItemInput{[]any{"Money", "10x"}}, nil, true},
+		{"tuple string item names", []ItemInput{[]any{"Money", "Wood"}}, nil, true},
 		{"tuple non-positive count", []ItemInput{[]any{"Money", 0}}, nil, true},
 		{"nil input", []ItemInput{nil}, nil, true},
 		{"invalid type", []ItemInput{42}, nil, true},
@@ -468,6 +469,7 @@ func TestFlattenSingleSequence(t *testing.T) {
 	}{
 		{"single sequence flattened", []any{[]string{"A", "B"}}, []any{"A", "B"}},
 		{"tuple preserved", []any{[]any{"Money", 5}}, []any{[]any{"Money", 5}}},
+		{"string slice preserved", []any{[]any{"Money", "Wood"}}, []any{[]any{"Money", "Wood"}}},
 		{"multiple elements untouched", []any{"A", []any{"B", 1}}, []any{"A", []any{"B", 1}}},
 		{"non-slice untouched", []any{"A"}, []any{"A"}},
 		{"byte slice untouched", []any{[]byte("AB")}, []any{[]byte("AB")}},
