@@ -732,6 +732,9 @@ func (c *Client) GetBanlist(ctx context.Context, filters map[string]string) (*Ba
 			if _, ok := banlistFilters[key]; !ok {
 				return nil, fmt.Errorf("unsupported banlist filter %q", key)
 			}
+			if key == "active" && value != "true" && value != "false" && value != "1" {
+				return nil, fmt.Errorf("invalid banlist active value %q (want true, false, or 1)", value)
+			}
 			values.Set(key, value)
 		}
 		path = fmt.Sprintf("%s?%s", path, values.Encode())

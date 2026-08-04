@@ -399,6 +399,18 @@ func TestClient_GetBanlist_RejectsUnknownFilters(t *testing.T) {
 	}
 }
 
+func TestClient_GetBanlist_RejectsInvalidActiveValue(t *testing.T) {
+	client, err := NewClient("127.0.0.1", "token123")
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+	for _, value := range []string{"maybe", "0", "False", ""} {
+		if _, err := client.GetBanlist(testCtx, map[string]string{"active": value}); err == nil {
+			t.Fatalf("expected error for invalid active value %q", value)
+		}
+	}
+}
+
 func TestClient_SendPlayerMessage(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/v1/pdapi/SendPlayerMessage", func(w http.ResponseWriter, r *http.Request) {
