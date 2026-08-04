@@ -976,6 +976,20 @@ func TestForgottenTechs_UnmarshalJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(`{"Forgotten": 123}`), &response); err == nil {
 		t.Fatal("expected error for non-string non-array forgotten")
 	}
+
+	if err := json.Unmarshal([]byte(`{"Forgotten": null}`), &response); err != nil {
+		t.Fatalf("failed to decode null forgotten: %v", err)
+	}
+	if response.Forgotten.All || len(response.Forgotten.IDs) != 0 {
+		t.Fatalf("unexpected null forgotten: %+v", response.Forgotten)
+	}
+
+	if err := json.Unmarshal([]byte(`{"Forgotten": ""}`), &response); err != nil {
+		t.Fatalf("failed to decode empty forgotten: %v", err)
+	}
+	if response.Forgotten.All || len(response.Forgotten.IDs) != 0 {
+		t.Fatalf("unexpected empty forgotten: %+v", response.Forgotten)
+	}
 }
 
 func TestClient_DeleteBase_DocumentedShape(t *testing.T) {

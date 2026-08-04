@@ -795,7 +795,9 @@ func (f *ForgottenTechs) UnmarshalJSON(data []byte) error {
 			f.All = true
 			return nil
 		}
-		f.IDs = []string{value}
+		if value != "" {
+			f.IDs = []string{value}
+		}
 		return nil
 	}
 	var ids []string
