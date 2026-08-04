@@ -455,13 +455,13 @@ func validateProgressionRequest(request *GiveProgressionRequest) error {
 		return errors.New("at least one progression field must be provided")
 	}
 	if request.EXP < 0 {
-		return errors.New("exp must be a positive integer")
+		return errors.New("exp must be a non-negative integer")
 	}
 	if request.TechnologyPoints < 0 {
-		return errors.New("technology_points must be a positive integer")
+		return errors.New("technology_points must be a non-negative integer")
 	}
 	if request.AncientTechnologyPoints < 0 {
-		return errors.New("ancient_technology_points must be a positive integer")
+		return errors.New("ancient_technology_points must be a non-negative integer")
 	}
 	return nil
 }
