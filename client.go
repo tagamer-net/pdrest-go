@@ -689,6 +689,9 @@ func (c *Client) SendPlayerMessage(ctx context.Context, request *SendPlayerMessa
 	if strings.TrimSpace(request.Message) == "" {
 		return nil, errors.New("message is required")
 	}
+	if request.UserID != "" && strings.TrimSpace(request.UserID) == "" {
+		return nil, errors.New("userID must not be empty")
+	}
 	if (request.UserID != "") == (len(request.UserIDs) > 0) {
 		return nil, errors.New("exactly one of UserID or UserIDs must be provided")
 	}
@@ -696,9 +699,6 @@ func (c *Client) SendPlayerMessage(ctx context.Context, request *SendPlayerMessa
 		if strings.TrimSpace(id) == "" {
 			return nil, errors.New("userIDs must not contain empty entries")
 		}
-	}
-	if request.UserID != "" && strings.TrimSpace(request.UserID) == "" {
-		return nil, errors.New("userID must not be empty")
 	}
 	if err := c.requestInto(ctx, http.MethodPost, "/SendPlayerMessage", request, &result); err != nil {
 		return nil, err

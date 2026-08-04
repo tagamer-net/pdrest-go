@@ -2023,8 +2023,8 @@ func TestClient_SendPlayerMessage_NilRequestAndWhitespaceUserID(t *testing.T) {
 	if _, err := client.SendPlayerMessage(testCtx, nil); err == nil {
 		t.Fatal("expected error for nil request")
 	}
-	if _, err := client.SendPlayerMessage(testCtx, &SendPlayerMessageRequest{SendType: "PlayerChat", Message: "hi", UserID: " ", UserIDs: []string{"b"}}); err == nil {
-		t.Fatal("expected error for whitespace-only UserID with UserIDs set")
+	if _, err := client.SendPlayerMessage(testCtx, &SendPlayerMessageRequest{SendType: "PlayerChat", Message: "hi", UserID: " ", UserIDs: []string{"b"}}); err == nil || err.Error() != "userID must not be empty" {
+		t.Fatalf("expected whitespace-only UserID to be rejected with 'userID must not be empty', got: %v", err)
 	}
 }
 
